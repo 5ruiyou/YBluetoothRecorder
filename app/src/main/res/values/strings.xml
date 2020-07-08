@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">YBluetoothRecorder</string>
+    <string name="tip">提示：
+        \n\t\t录音数据保存目录：/sdcard/Sounds
+        \n\t\t录音文件命名格式是当前的时间戳</string>
+    <string name="welcome">欢迎使用蓝牙录音测试版！</string>
+    <string name="play">开始播放</string>
+    <string name="stop">停止播放</string>
+    <string name="openBluetoothMic">打开蓝牙Mic</string>
+    <string name="closeBluetoothMic">关闭蓝牙Mic</string>
+    <string name="startRecord">开始录音</string>
+    <string name="stopRecord">停止录音</string>
+    <string name="timeFormat">--:--:--</string>
+</resources>
