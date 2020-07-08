@@ -1,12 +1,10 @@
 package com.ruiyou.ybluetoothrecorder;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.media.AudioRecord;
 import android.media.MediaPlayer;
-import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -16,6 +14,8 @@ import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +35,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+        checkPermission();
         bindView();
+        aRecord=AudioRecordUtil.getInstance(44100,
+                1,16);
         runTimer();
     }
 
@@ -84,11 +88,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
                     seekBar.setEnabled(false);
                     bt_play.setText(R.string.play);
+                    bt_record.setEnabled(true);
                     tv_duration.setText(R.string.timeFormat);
                     tv_playTime.setText(R.string.timeFormat);
                 }
                 //录音计时
-                if (isRecording){
+                if (isRecording== true){
                     tv_recordTime.setText(String.format(Locale.getDefault(),
                             "%02d:%02d:%02d",seconds/3600,
                             seconds%3600/60,seconds%60));
@@ -133,20 +138,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()){
             case R.id.bt_record:
                 if (bt_record.getText()== getString(R.string.startRecord)){
-                    if (aRecord==null){
-                        aRecord=AudioRecordUtil.getInstance(44100,
-                                1,16);
-                    }
-                    audioFile = new File(Environment.getExternalStorageDirectory(),
-                            "/BluetoothRecord/"+System.currentTimeMillis()+".wav");
-                    aRecord.startRecord(audioFile);
-                    isRecording=true;
+                    File dir = new File(Environment.getExternalStorageDirectory(),
+                            "BluetoothRecording");
+                    if (!dir.exists()||!dir.isDirectory()) dir.mkdir();
+                    audioFile = new File(dir,   System.currentTimeMillis()+".wav");
+                    aRecord.startRecord(this,audioFile);
                     bt_play.setEnabled(false);
+                    isRecording=true;
                     bt_record.setText(R.string.stopRecord);
                 }else {
                     if (aRecord!=null) aRecord.stopRecord();
-                    isRecording=false;
                     bt_play.setEnabled(true);
+                    isRecording=false;
                     bt_record.setText(R.string.startRecord);
                 }
                 break;

@@ -1,9 +1,11 @@
 package com.ruiyou.ybluetoothrecorder;
 
+import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +34,7 @@ public class AudioRecordUtil {
     }
 
     //开始
-    public void startRecord(File file) {
+    public void startRecord(Context context,File file) {
         try {
             if (file.exists()) file.delete();
             file.createNewFile();
@@ -50,9 +52,11 @@ public class AudioRecordUtil {
             rFile.seek(0);
             long len = rFile.length();
             rFile.write(getWavHeader(len-44));
+            rFile.close();
             audioRecord.stop();
         } catch (IOException e) {
             e.printStackTrace();
+            Toast.makeText(context,e.getMessage(),Toast.LENGTH_LONG).show();
         }
     }
 
@@ -60,6 +64,15 @@ public class AudioRecordUtil {
     public void stopRecord(){
         whetherStop = true;
     }
+
+    //public int getState(){
+        //return audioRecord.getState();
+        /*AudioRecord.STATE_INITIALIZED=1;
+        AudioRecord.STATE_UNINITIALIZED=0;
+        AudioRecord.RECORDSTATE_RECORDING=3;
+        AudioRecord.RECORDSTATE_STOPPED=1;
+        */
+    //}
 
     private byte[] getWavHeader(long audioDataSize){
         byte[] bs = new byte[44];
