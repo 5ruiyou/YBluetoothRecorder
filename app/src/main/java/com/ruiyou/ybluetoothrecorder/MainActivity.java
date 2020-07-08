@@ -2,9 +2,12 @@ package com.ruiyou.ybluetoothrecorder;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -14,16 +17,14 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.ruiyou.ybluetoothrecorder.R;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private MediaRecorder mediaRecorder = null;
-    private File soundFile = null;
+    private AudioRecordUtil aRecord = null;
+    private File audioFile = null;
     private MediaPlayer mediaPlayer = null;
     private Button bt_play,bt_record,bt_openBluetoothMic;
     private TextView tv_recordTime,tv_playTime,tv_duration;
@@ -36,6 +37,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         bindView();
         runTimer();
+    }
+
+    //检查权限
+    private void checkPermission(){
+        if (Build.VERSION.SDK_INT< Build.VERSION_CODES.M){
+            return;//API小于23（android6.0）不需要动态申请
+        }
+        String[] ps = new String[]{
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.RECORD_AUDIO,
+                Manifest.permission.BLUETOOTH,
+                Manifest.permission.BLUETOOTH_ADMIN,
+                Manifest.permission.MODIFY_AUDIO_SETTINGS
+        };
+        for (int i = 0; i<ps.length; i++){
+            if(checkSelfPermission(ps[i])!= PackageManager.PERMISSION_GRANTED){
+                requestPermissions(ps,678);
+            }
+        }
     }
 
     //计时器
@@ -94,14 +114,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         seekBar=findViewById(R.id.seekBar);
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
-            }
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
+            public void onStartTrackingTouch(SeekBar seekBar) {}
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
@@ -117,21 +133,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()){
             case R.id.bt_record:
                 if (bt_record.getText()== getString(R.string.startRecord)){
-                    startRecord();
+                    if (aRecord==null){
+                        aRecord=AudioRecordUtil.getInstance(44100,
+                                1,16);
+                    }
+                    audioFile = new File(Environment.getExternalStorageDirectory(),
+                            "/BluetoothRecord/"+System.currentTimeMillis()+".wav");
+                    aRecord.startRecord(audioFile);
                     isRecording=true;
+                    bt_play.setEnabled(false);
                     bt_record.setText(R.string.stopRecord);
                 }else {
-                    stopRecord();
+                    if (aRecord!=null) aRecord.stopRecord();
                     isRecording=false;
+                    bt_play.setEnabled(true);
                     bt_record.setText(R.string.startRecord);
                 }
                 break;
             case R.id.bt_play:
-                if (soundFile==null||!soundFile.exists()){
+                if (audioFile ==null||!audioFile.exists()){
                     Toast.makeText(this,"文件不存在",Toast.LENGTH_LONG).show();
                     break;
                 }
-                String path = soundFile.getAbsolutePath();
+                String path = audioFile.getAbsolutePath();
                 if (mediaPlayer == null) {
                     mediaPlayer = new MediaPlayer();
                 }
@@ -144,9 +168,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();
                     }
                     mediaPlayer.start();
+                    bt_record.setEnabled(false);
                     bt_play.setText(R.string.stop);
                 } else {
                     mediaPlayer.stop();
+                    bt_record.setEnabled(true);
                     bt_play.setText(R.string.play);
                 }
                 break;
@@ -163,42 +189,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     bt_openBluetoothMic.setText(R.string.openBluetoothMic);
                 }
                 break;
-        }
-    }
-
-    //开始录音
-    private void startRecord(){
-        File dir = new File(Environment.getExternalStorageDirectory(),"Sounds");
-        if (!dir.exists()){
-            dir.mkdir();
-        }
-        soundFile = new File(dir,System.currentTimeMillis()+".amr");
-        if (!soundFile.exists()){
-            try {
-                soundFile.createNewFile();
-            }catch (IOException e){
-                Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();
-            }
-        }
-        mediaRecorder = new MediaRecorder();
-        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_WB);
-        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
-        mediaRecorder.setOutputFile(soundFile.getAbsolutePath());
-        try {
-            mediaRecorder.prepare();
-            mediaRecorder.start();
-        }catch (IOException e){
-            Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();
-        }
-    }
-
-    //停止录音
-    private void stopRecord(){
-        if (mediaRecorder != null){
-            mediaRecorder.stop();
-            mediaRecorder.release();
-            mediaRecorder = null;
         }
     }
 }
