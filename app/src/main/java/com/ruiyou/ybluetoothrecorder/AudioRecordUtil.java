@@ -2,7 +2,6 @@ package com.ruiyou.ybluetoothrecorder;
 
 import android.content.Context;
 import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.widget.Toast;
