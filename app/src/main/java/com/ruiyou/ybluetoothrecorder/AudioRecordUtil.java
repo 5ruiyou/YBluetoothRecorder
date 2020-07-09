@@ -65,14 +65,15 @@ public class AudioRecordUtil {
         whetherStop = true;
     }
 
-    //public int getState(){
-        //return audioRecord.getState();
+    public int getRecordState(){
+        if (audioRecord==null)return 0;
+        return audioRecord.getRecordingState();
         /*AudioRecord.STATE_INITIALIZED=1;
         AudioRecord.STATE_UNINITIALIZED=0;
         AudioRecord.RECORDSTATE_RECORDING=3;
         AudioRecord.RECORDSTATE_STOPPED=1;
         */
-    //}
+    }
 
     private byte[] getWavHeader(long audioDataSize){
         byte[] bs = new byte[44];

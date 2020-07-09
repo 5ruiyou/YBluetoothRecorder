@@ -2,8 +2,8 @@ package com.ruiyou.ybluetoothrecorder;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.media.AudioFormat;
 import android.media.AudioManager;
-import android.media.AudioRecord;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
@@ -19,7 +19,14 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Time;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.Locale;
+import java.util.Timer;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -39,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         checkPermission();
         bindView();
         aRecord=AudioRecordUtil.getInstance(44100,
-                1,16);
+                AudioFormat.CHANNEL_IN_MONO,16);
         runTimer();
     }
 
@@ -141,8 +148,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     File dir = new File(Environment.getExternalStorageDirectory(),
                             "BluetoothRecording");
                     if (!dir.exists()||!dir.isDirectory()) dir.mkdir();
-                    audioFile = new File(dir,   System.currentTimeMillis()+".wav");
-                    aRecord.startRecord(this,audioFile);
+                    Date time = new Date(System.currentTimeMillis());
+                    String fileName=String.format(Locale.getDefault(),
+                            "%04d%02d%02d%02d%02d%02d",time.getYear()+1900,
+                            time.getMonth()+1, time.getDate(),time.getHours(),time.getMinutes(),
+                            time.getSeconds())+".wav";
+                    audioFile = new File(dir,   fileName);
+                    new Thread(()->{
+                        aRecord.startRecord(this,audioFile);
+                    }).start();
                     bt_play.setEnabled(false);
                     isRecording=true;
                     bt_record.setText(R.string.stopRecord);
